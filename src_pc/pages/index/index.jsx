@@ -15,6 +15,7 @@ import { contactCustomerService } from "mapp_common/utils/openChat";
 import { Logger } from "mapp_common/utils/logger";
 import './index.scss';
 import Test from "pcPages/test";
+import BabyChoice from "../babyChoice";
 
 class Index extends Component {
 
@@ -225,6 +226,7 @@ class Index extends Component {
                                 <View slot='tradeList'>紧张施工中...</View>
                                 <View slot='refundManagement'><RefundManagement /></View>
                                 <View slot='test'><Test /></View>
+                                <View slot='babyChoice'><BabyChoice /></View>
                             </router-view>
 
                         </View>

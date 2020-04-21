@@ -10,7 +10,8 @@ class MyPagination extends Component {
                 current={this.props.pageNo}
                 pageSize={this.props.pageSize}
                 shape='normal'
-                showJump={false}
+                showJump={true}
+                hideOnlyOnePage={true}
                 pageSizeSelector={this.props.onPageSizeChange ? this.props.pageSizeSelector : false}
                 pageSizePosition='end'
                 pageSizeList={this.props.pageSizeList}
