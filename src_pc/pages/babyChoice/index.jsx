@@ -1,8 +1,8 @@
 import Taro, { Component } from '@tarojs/taro';
 import { View, Text, Input, Button } from '@tarojs/components';
 import './index.scss';
-import BabyContent from '../../components/babyChoice/baby/index';
-import ClassContent from '../../components/babyChoice/classify/index';
+import BabyContent from '../../components/babyChoice/babyContent/index';
+import ClassContent from '../../components/babyChoice/classContent/index';
 
 class BabyChoice extends Component {
 

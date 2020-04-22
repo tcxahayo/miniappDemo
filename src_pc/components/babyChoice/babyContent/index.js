@@ -10,23 +10,20 @@ class BabyContent extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            fields: 'title,num_iid,pic_url,num,price,sold_quantity,outer_id',
-            page: 1,
-            status: '出售中',
             list: [],
             total_results: '',
-            current: 1,
-            order_by: 'list_time:desc',
             keywords: '',
             cheackList: [],
-            checkAll: false,
             classList: [],
-            seller_cids: 'all',
-            changeWord: '宝贝关键词',
-            totalNum: 0,
             newData: [],
             errTxt: ''
-        }
+        };
+        this.status = '出售中';
+        this.current = 1;
+        this.order_by = 'list_time:desc';
+        this.changeWords = '宝贝关键词';
+        this.checkAll = false;
+        this.seller_cids = 'all'
     }
     //分类接口
     getClasstify = () => {
@@ -43,68 +40,60 @@ class BabyContent extends Component {
         Taro.showLoading({
             title: 'loading'
           })
-        taobaoItemListGet(
-            {
-                fields: this.state.fields,
-                page_no: this.state.current,
+        taobaoItemListGet({
+                fields: 'title,num_iid,pic_url,num,price,sold_quantity,outer_id',
+                page_no: this.current,
                 page_size: 20,
-                status: this.state.status,
+                status: this.status,
                 extraArgs: {
-                    order_by: this.state.order_by,
+                    order_by: this.order_by,
                     q: this.state.keywords,
-                    seller_cids: this.state.seller_cids
+                    seller_cids: this.seller_cids
                 },
-                callback: (data) => {
-                    console.log(data);
-                    let num = 0;
-                    if (data.total_results > 0) {
-                        let newList = data.items.item.map((item, index) => {
-                            item.pic_url = item.pic_url + '_60x60.jpg';
-                            item.checked = false;
-                            if (this.state.cheackList.indexOf(item.num_iid) !== -1) {
-                                num += 1;
-                                item.checked = true;
-                            }
-                            return item;
-                        })
-                        if (num === 20) {
-                            this.setState({
-                                checkAll: true
-                            })
-                        } else {
-                            this.setState({
-                                checkAll: false
-                            })
-                        }
-                        this.setState({
-                            list: newList,
-                            total_results: data.total_results,
-                            keywords: ''
-                        })
-                        Taro.hideLoading()
-                    } else {
-                        this.setState({
-                            list: []
-                        })
-                    }
-
+                callback: (data)=>{
+                    this.handleData(data)
                 }
             }
         )
+    }
+    //callback的处理数据
+    handleData = (data)=> {
+        let num = 0;
+        if (data.total_results > 0) {
+            let newList = data.items.item.map((item, index) => {
+                item.pic_url = item.pic_url + '_60x60.jpg';
+                item.checked = false;
+                if (this.state.cheackList.indexOf(item.num_iid) !== -1) {
+                    num += 1;
+                    item.checked = true;
+                }
+                return item;
+            })
+            if (num === 20) this.checkAll = true;
+            this.setState({
+                list: newList,
+                total_results: data.total_results,
+                keywords: ''
+            })
+            Taro.hideLoading()
+        } else {
+            this.setState({
+                list: []
+            })
+        }
     }
 
     //重新进行封装
     taobaoItemListGetPromise = (page) => {
         return new Promise((resolve) => {
-            taobaoItemListGet(
-                {
-                    fields: this.state.fields,
+            taobaoItemListGet({
+                    fields: 'title,num_iid,pic_url,num,price,sold_quantity,outer_id',
                     page_no: page,
                     page_size: 20,
-                    status: this.state.status,
+                    status: this.status,
                     extraArgs: {
-                        order_by: this.state.order_by,
-                        seller_cids: this.state.seller_cids
+                        order_by: this.order_by,
+                        seller_cids: this.seller_cids
                     },
                     callback: (data) => {
                         console.log(data);
@@ -128,6 +117,7 @@ class BabyContent extends Component {
     }
 
     //接口调取数据,非商家编码
+    //如果是调取100条数据的话，那么分页的总页数怎么算？
     getListbyId = async () => {
         Taro.showLoading({
             title: 'loading'
@@ -167,42 +157,29 @@ class BabyContent extends Component {
 
     //切换商品状态
     changeStatus = (e) => {
-        this.setState({
-            status: e.detail.value
-        })
+        this.status = e.detail.value
     }
     //选择分类
     changeClasstify = (e) => {
-        this.setState({
-            seller_cids: e.detail.value
-        })
+        this.seller_cids = e.detail.value
     }
     //切换查询关键词
     changeWord = (e) => {
-        this.setState({
-            changeWord: e.detail.value
-        })
+        this.changeWords = e.detail.value;
     }
     //点击页数
     changePage = (current) => {
-        if (this.state.changeWord === '宝贝关键词') {
-            this.setState({
-                current: current,
-                checkAll: false
-            }, () => {
-                this.getList();
-            })
+        this.checkAll = false;
+        this.current = current;//不能将current移到getList里，因为分页的时候，不能将页数改为1
+        if (this.changeWords === '宝贝关键词') {
+            this.getList();
         } else {
             if (current === 1) {
                 this.setState({
-                    current: current,
-                    checkAll: false,
                     list: this.state.newData.slice(0, 20)
                 })
             } else {
                 this.setState({
-                    current: current,
-                    checkAll: false,
                     list: this.state.newData.slice((current - 1) * 20, current * 20)
                 })
             }
@@ -211,46 +188,31 @@ class BabyContent extends Component {
     }
     //确定查询
     serach = () => {
-        if (this.state.changeWord === '宝贝关键词') {
-            this.setState({
-                current: 1,
-                order_by: 'list_time:desc',
-                cheackList: [],
-                checkAll: false
-            }, () => {
-                this.getList();
-            })
+        this.current = 1;//不能将current移到getList里，因为分页的时候，不能将页数改为1
+        this. order_by = 'list_time:desc';
+        this.checkAll = false;
+        this.setState({
+            cheackList: [],
+            newData: []
+        })
+        if (this.changeWords === '宝贝关键词') {
+            this.getList();
         } else {
-            this.setState({
-                current: 1,
-                order_by: 'list_time:desc',
-                cheackList: [],
-                checkAll: false,
-                newData: []
-            }, () => {
-                this.getListbyId();
-            })
+            this.getListbyId();
         }
 
     }
     //点击排序
     orderBy = (value) => {
-        if (this.state.changeWord === '宝贝关键词') {
-            this.setState({
-                order_by: value,
-                cheackList: [],
-                checkAll: false
-            }, () => {
-                this.getList();
-            })
+        this.order_by = value;
+        this.checkAll =false;
+        this.setState({
+            cheackList: []
+        })
+        if (this.changeWords === '宝贝关键词') {
+            this.getList();
         } else {
-            this.setState({
-                order_by: value,
-                cheackList: [],
-                checkAll: false
-            }, () => {
-                this.getListbyId();
-            })
+            this.getListbyId();
         }
     }
     //输入关键词
@@ -258,7 +220,6 @@ class BabyContent extends Component {
         this.setState({
             keywords: e.target.value
         })
-        console.log(e.target.value)
     }
     //cheackbox,单选
     changeChecked = (e) => {
@@ -267,58 +228,55 @@ class BabyContent extends Component {
         } else {
             let id = e.target.id;
             let index = e.target.dataset.index;
-            let newList = this.state.list;
+            let newList = Object.assign([],this.state.list);
             newList[index].checked = !newList[index].checked;
             if (e.target.value) {
                 this.setState({
-                    cheackNum: this.state.cheackNum + 1,
                     list: newList,
                     cheackList: [...this.state.cheackList, id]
                 })
             } else {
                 let index = this.state.cheackList.indexOf(id);
-                let newCheackList = this.state.cheackList;
+                let newCheackList = Object.assign([],this.state.cheackList);
                 newCheackList.splice(index, 1);
+                this.checkAll = false;
                 this.setState({
-                    cheackNum: this.state.cheackNum - 1,
                     list: newList,
-                    cheackList: newCheackList,
-                    checkAll:false
+                    cheackList: newCheackList
                 })
             }
         }
 
     }
     //全选
-    checkAll = (e) => {
-        let newList = this.state.list;
-        const newCheackList = this.state.cheackList;
+    checkAllValues = (e) => {
+        let newCheackList = Object.assign([],this.state.cheackList);
         if (newCheackList.length + 20 > 500) {
             this.limit('最多选择500个宝贝!')
         } else {
             if (e.target.value) {
-                newList.map((item) => {
+                let newList = this.state.list.map((item) => {
                     newCheackList.push(item.num_iid)
                     item.checked = true;
                     return item
                 })
                 let arr = new Set(newCheackList);
+                this.checkAll = true;
                 this.setState({
                     list: newList,
-                    cheackList: Array.from(arr),
-                    checkAll: true
+                    cheackList: Array.from(arr)
                 })
             } else {
-                newList.map((item) => {
+                let newList = this.state.list.map((item) => {
                     let index = newCheackList.indexOf(item.num_iid);
                     newCheackList.splice(index, 1);
                     item.checked = false;
                     return item
                 })
+                this.checkAll = false;
                 this.setState({
                     list: newList,
-                    cheackList: newCheackList,
-                    checkAll: false
+                    cheackList: newCheackList
                 })
             }
         }
@@ -344,6 +302,7 @@ class BabyContent extends Component {
         }, 2000)
     }
 
+
     componentDidMount() {
         //初始化页面数据，获取出售中的商品
         this.getList();
@@ -351,11 +310,11 @@ class BabyContent extends Component {
         this.getClasstify();
     }
     render() {
-        const { list, total_results, current, order_by, keywords, checkAll, cheackList, classList, errTxt } = this.state;
+        const { list, total_results,  keywords, cheackList, classList, errTxt } = this.state;
         return (
             <View className='baby-content'>
                 {
-                    errTxt.length > 0 && (
+                    errTxt && (
                         <View className='hint'>
                             <View className='iconfont err'>&#xe613;</View>
                             <View className='errTxt'>{errTxt}</View>
@@ -398,21 +357,21 @@ class BabyContent extends Component {
                 </View>
                 <View className='babyList'>
                     <View className='muen'>
-                        <checkbox className='cheack-all' id='all' onChange={this.checkAll} values='123' checked={checkAll}>全选</checkbox>
+                        <checkbox className='cheack-all' id='all' onChange={this.checkAllValues} checked={this.checkAll}>全选</checkbox>
                         <View className='name'>宝贝信息</View>
                         <View className='price'>价格</View>
                         <View className='inventory'>
                             <View className='txt'>库存</View>
                             <View className='oper'>
-                                <View className={`iconfont icno-up ${order_by === 'num:asc' ? 'action' : ''}`} onClick={this.orderBy.bind(this, 'num:asc')}>&#xe62a;</View>
-                                <View className={`iconfont icno-down ${order_by === 'num:desc' ? 'action' : ''}`} onClick={this.orderBy.bind(this, 'num:desc')}>&#xe634;</View>
+                                <View className={`iconfont icno-up ${ this.order_by === 'num:asc' ? 'action' : ''}`} onClick={this.orderBy.bind(this, 'num:asc')}>&#xe62a;</View>
+                                <View className={`iconfont icno-down ${this.order_by === 'num:desc' ? 'action' : ''}`} onClick={this.orderBy.bind(this, 'num:desc')}>&#xe634;</View>
                             </View>
                         </View>
                         <View className='sales'>
                             <View className='txt'>销量</View>
                             <View className='oper'>
-                                <View className={`iconfont icno-up ${order_by === 'sold_quantity:asc' ? 'action' : ''}`} onClick={this.orderBy.bind(this, 'sold_quantity:asc')}>&#xe62a;</View>
-                                <View className={`iconfont icno-down ${order_by === 'sold_quantity:desc' ? 'action' : ''}`} onClick={this.orderBy.bind(this, 'sold_quantity:desc')}>&#xe634;</View>
+                                <View className={`iconfont icno-up ${this.order_by === 'sold_quantity:asc' ? 'action' : ''}`} onClick={this.orderBy.bind(this, 'sold_quantity:asc')}>&#xe62a;</View>
+                                <View className={`iconfont icno-down ${this.order_by === 'sold_quantity:desc' ? 'action' : ''}`} onClick={this.orderBy.bind(this, 'sold_quantity:desc')}>&#xe634;</View>
                             </View>
                         </View>
                     </View>
@@ -446,7 +405,7 @@ class BabyContent extends Component {
                             <View className='page'>
                                 <MyPagination
                                     total={total_results}
-                                    pageNo={current}
+                                    pageNo={this.current}
                                     pageSizeSelector='dropdown'
                                     pageSize={20}
                                     onPageNoChange={this.changePage}
